@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"shakal/user"
-	"time"
-
-	jwt "github.com/dgrijalva/jwt-go"
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,22 +14,36 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	decoder := json.NewDecoder(r.Body)
-	var u user.Credentials
+	var c user.Credentials
+	err := decoder.Decode(&c)
+	p := apiAnswer{}
+	if err != nil {
+		p = apiAnswer{Code: 1, Message: "Error during parsing data"}
+	} else {
+		u, err := user.Auth(c)
+		if err != nil {
+			p = apiAnswer{Code: 1, Message: err.Error()}
+		} else {
+			p = apiAnswer{Code: 0, Message: u.token}
+		}
+	}
+	err = writeJSONToStream(w, p)
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	decoder := json.NewDecoder(r.Body)
+	var u user.User
 	err := decoder.Decode(&u)
 	p := apiAnswer{}
 	if err != nil {
 		p = apiAnswer{Code: 1, Message: "Error during parsing data"}
 	} else {
-		err = user.Auth(u)
+		u, err := user.Register(u)
 		if err != nil {
 			p = apiAnswer{Code: 1, Message: err.Error()}
 		} else {
-			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-				"foo": "bar",
-				"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
-			})
-			tokenString, _ := token.SignedString([]byte("Secret"))
-			p = apiAnswer{Code: 0, Message: tokenString}
+			p = apiAnswer{Code: 0, Message: u.token}
 		}
 	}
 	err = writeJSONToStream(w, p)
