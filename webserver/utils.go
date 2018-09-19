@@ -8,9 +8,14 @@ import (
 type jsonConvertable interface {
 }
 
-type apiAnswer struct {
+type apiError struct {
 	Code    int
 	Message string
+}
+
+type apiAuth struct {
+	Code  int
+	Token string
 }
 
 func writeJSONToStream(w http.ResponseWriter, p jsonConvertable) error {

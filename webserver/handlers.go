@@ -1,10 +1,10 @@
 package webserver
 
 import (
+	"2018_2_LSP/user"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"shakal/user"
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,18 +16,20 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var c user.Credentials
 	err := decoder.Decode(&c)
-	p := apiAnswer{}
 	if err != nil {
-		p = apiAnswer{Code: 1, Message: "Error during parsing data"}
-	} else {
-		u, err := user.Auth(c)
-		if err != nil {
-			p = apiAnswer{Code: 1, Message: err.Error()}
-		} else {
-			p = apiAnswer{Code: 0, Message: u.token}
-		}
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSONToStream(w, apiError{1, err.Error()})
+		return
 	}
-	err = writeJSONToStream(w, p)
+
+	u, err := user.Auth(c)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSONToStream(w, apiError{2, err.Error()})
+		return
+	}
+
+	err = writeJSONToStream(w, apiAuth{0, u.Token})
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,16 +37,19 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var u user.User
 	err := decoder.Decode(&u)
-	p := apiAnswer{}
 	if err != nil {
-		p = apiAnswer{Code: 1, Message: "Error during parsing data"}
-	} else {
-		u, err := user.Register(u)
-		if err != nil {
-			p = apiAnswer{Code: 1, Message: err.Error()}
-		} else {
-			p = apiAnswer{Code: 0, Message: u.token}
-		}
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSONToStream(w, apiError{1, err.Error()})
+		return
 	}
-	err = writeJSONToStream(w, p)
+
+	u, err = user.Register(u)
+	if err != nil {
+		// TODO добавить возврат ошибок по полям
+		w.WriteHeader(http.StatusConflict)
+		writeJSONToStream(w, apiError{2, err.Error()})
+		return
+	}
+
+	err = writeJSONToStream(w, apiAuth{0, u.Token})
 }
