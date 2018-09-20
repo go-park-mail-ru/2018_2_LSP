@@ -3,13 +3,8 @@ package webserver
 import (
 	"2018_2_LSP/user"
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
-
-func mainHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hi there, I love %s!", r.URL.Path[1:])
-}
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")

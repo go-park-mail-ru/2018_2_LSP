@@ -12,9 +12,9 @@ var connectionOpened = false
 // Query query sql request with args
 func Query(query string, args ...interface{}) (*sql.Rows, error) {
 	if !connectionOpened {
-		connStr := "user=pqgotest dbname=pqgotest sslmode=verify-full"
+		connStr := "user=postgres password=root dbname=mytestdb sslmode=disable"
 		db, _ = sql.Open("postgres", connStr)
 		connectionOpened = true
 	}
-	return db.Query(query, args)
+	return db.Query(query, args...)
 }

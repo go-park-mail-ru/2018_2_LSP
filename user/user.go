@@ -3,6 +3,8 @@ package user
 import (
 	"2018_2_LSP/utils"
 	"errors"
+	"log"
+	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -21,6 +23,7 @@ type User struct {
 	Credentials
 	ID          int
 	Token       string
+	Username    string
 	Password    string
 	FirstName   string
 	LastName    string
@@ -31,22 +34,37 @@ type User struct {
 
 // Register Function that sign ups user
 func Register(u User) (User, error) {
-	hashedPwd, err := bcrypt.GenerateFromPassword([]byte(u.Password), 0)
-	if err != nil {
-		return u, nil
-	}
-	u.Password = string(hashedPwd)
 
-	_, err = utils.Query("INSERT INTO users (firstName, lastName, email, password) VALUES ($1, $2, $3, $4)", u.FirstName, u.LastName, u.Email, u.Password)
+	err := validateStringForEmptiness(u.Password, u.Email, u.Username)
 	if err != nil {
-		return u, nil
+		return u, err
+	}
+
+	u.Password = hashAndSalt([]byte(u.Password))
+
+	rows, err := utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)
+	if err != nil {
+		str := err.Error()
+		if strings.Contains(str, "users_username_key") {
+			return u, errors.New("Username is already taken")
+		}
+		if strings.Contains(str, "users_email_key") {
+			return u, errors.New("Email is already taken")
+		}
+		return u, err
+	}
+
+	rows.Next()
+	err = rows.Scan(&u.ID)
+	if err != nil {
+		return u, err
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		"id":        u.ID,
+		"generated": time.Now(),
 	})
-	u.Token, err = token.SignedString([]byte("test"))
+	u.Token, err = token.SignedString([]byte("HeAdfasdf3ref&^%$Dfrtgauyhia"))
 	if err != nil {
 		return u, err
 	}
@@ -57,12 +75,18 @@ func Register(u User) (User, error) {
 // Auth Function that authenticates user
 func Auth(c Credentials) (User, error) {
 	var u User
-	// if lenc.Email
+
+	err := validateStringForEmptiness(c.Email, c.Password)
+	if err != nil {
+		return u, err
+	}
+
 	rows, err := utils.Query("SELECT id, password FROM users WHERE email = $1 LIMIT 1", c.Email)
 	if err != nil {
 		return u, err
 	}
-	err = rows.Scan(&u)
+	rows.Next()
+	err = rows.Scan(&u.ID, &u.Password)
 	if err != nil {
 		return u, errors.New("User not found")
 	}
@@ -72,15 +96,32 @@ func Auth(c Credentials) (User, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"foo": "bar",
-		"nbf": time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		"id":        u.ID,
+		"generated": time.Now(),
 	})
-	u.Token, err = token.SignedString([]byte("test"))
+	u.Token, err = token.SignedString([]byte("HeAdfasdf3ref&^%$Dfrtgauyhia"))
 	if err != nil {
 		return u, err
 	}
 
 	return u, nil
+}
+
+func validateStringForEmptiness(strs ...string) error {
+	for _, s := range strs {
+		if len(s) == 0 {
+			return errors.New("Found empty parameter")
+		}
+	}
+	return nil
+}
+
+func hashAndSalt(pwd []byte) string {
+	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+	}
+	return string(hash)
 }
 
 func comparePasswords(hashedPwd string, plainPwd string) bool {
