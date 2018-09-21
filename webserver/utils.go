@@ -13,6 +13,16 @@ type apiError struct {
 	Message string
 }
 
+type registerError struct {
+	Code   int
+	Fields []fieldError
+}
+
+type fieldError struct {
+	Field   string
+	Message string
+}
+
 type apiAuth struct {
 	Code  int
 	Token string

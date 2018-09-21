@@ -40,7 +40,17 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	u, err = user.Register(u)
 	if err != nil {
-		// TODO добавить возврат ошибок по полям
+		if err, ok := err.(*user.RegisterError); ok {
+			fields := make([]fieldError, 0)
+			switch err.Code() {
+			case 1:
+				fields = append(fields, fieldError{"username", err.Error()})
+			case 2:
+				fields = append(fields, fieldError{"email", err.Error()})
+			}
+			writeJSONToStream(w, registerError{2, fields})
+			return
+		}
 		w.WriteHeader(http.StatusConflict)
 		writeJSONToStream(w, apiError{2, err.Error()})
 		return

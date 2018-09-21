@@ -32,6 +32,21 @@ type User struct {
 	DateUreated string
 }
 
+type RegisterError struct {
+	s    string
+	code int
+}
+
+func (e *RegisterError) Error() string {
+	return e.s
+	// return fmt.Sprintf("radius %0.2f: %s", e.radius, e.err)
+}
+
+func (e *RegisterError) Code() int {
+	return e.code
+	// return fmt.Sprintf("radius %0.2f: %s", e.radius, e.err)
+}
+
 // Register Function that sign ups user
 func Register(u User) (User, error) {
 
@@ -46,10 +61,10 @@ func Register(u User) (User, error) {
 	if err != nil {
 		str := err.Error()
 		if strings.Contains(str, "users_username_key") {
-			return u, errors.New("Username is already taken")
+			return u, &RegisterError{"Username is already taken", 1}
 		}
 		if strings.Contains(str, "users_email_key") {
-			return u, errors.New("Email is already taken")
+			return u, &RegisterError{"Email is already taken", 2}
 		}
 		return u, err
 	}
