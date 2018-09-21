@@ -4,7 +4,6 @@ import (
 	"2018_2_LSP/utils"
 	"errors"
 	"log"
-	"strings"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -57,15 +56,27 @@ func Register(u User) (User, error) {
 
 	u.Password = hashAndSalt([]byte(u.Password))
 
-	rows, err := utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)
+	rows, err := utils.Query("SELECT EXISTS (SELECT * FROM user WHERE email = $1 LIMIT 1) AS `email`, EXISTS (SELECT * FROM user WHERE username = $2 LIMIT 1) AS `username`", u.Email, u.Username)
 	if err != nil {
-		str := err.Error()
-		if strings.Contains(str, "users_username_key") {
-			return u, &RegisterError{"Username is already taken", 1}
-		}
-		if strings.Contains(str, "users_email_key") {
-			return u, &RegisterError{"Email is already taken", 2}
-		}
+		return u, err
+	}
+
+	rows.Next()
+	emailTaken := false
+	usernameTaken := false
+	err = rows.Scan(&emailTaken, &usernameTaken)
+	if err != nil {
+		return u, err
+	}
+	if emailTaken {
+		return u, &RegisterError{"Username is already taken", 1}
+	}
+	if usernameTaken {
+		return u, &RegisterError{"Email is already taken", 2}
+	}
+
+	rows, err = utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)
+	if err != nil {
 		return u, err
 	}
 
