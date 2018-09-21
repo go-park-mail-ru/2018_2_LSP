@@ -68,11 +68,14 @@ func Register(u User) (User, error) {
 	if err != nil {
 		return u, err
 	}
+	if emailTaken && usernameTaken {
+		return u, &RegisterError{"Is already taken", 1}
+	}
 	if emailTaken {
-		return u, &RegisterError{"Username is already taken", 1}
+		return u, &RegisterError{"Is already taken", 2}
 	}
 	if usernameTaken {
-		return u, &RegisterError{"Email is already taken", 2}
+		return u, &RegisterError{"Is already taken", 3}
 	}
 
 	rows, err = utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)

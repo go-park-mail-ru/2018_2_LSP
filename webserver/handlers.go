@@ -45,8 +45,11 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			switch err.Code() {
 			case 1:
 				fields = append(fields, fieldError{"username", err.Error()})
-			case 2:
 				fields = append(fields, fieldError{"email", err.Error()})
+			case 2:
+				fields = append(fields, fieldError{"username", err.Error()})
+			case 3:
+				fields = append(fields, fieldError{"username", err.Error()})
 			}
 			writeJSONToStream(w, registerError{2, fields})
 			return
