@@ -1,9 +1,10 @@
 package webserver
 
 import (
-	"2018_2_LSP/leaderboard"
 	"net/http"
 	"strconv"
+
+	"github.com/go-park-mail-ru/2018_2_LSP/leaderboard"
 )
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {

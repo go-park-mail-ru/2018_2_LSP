@@ -1,7 +1,7 @@
 package leaderboard
 
 import (
-	"2018_2_LSP/utils"
+	"github.com/go-park-mail-ru/2018_2_LSP/utils"
 )
 
 // Item Structure that stores cell for leaderboard

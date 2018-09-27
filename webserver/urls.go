@@ -1,8 +1,9 @@
 package webserver
 
 import (
-	mw "2018_2_LSP/webserver/middlewares"
 	"net/http"
+
+	mw "github.com/go-park-mail-ru/2018_2_LSP/webserver/middlewares"
 )
 
 type urlHandler struct {
