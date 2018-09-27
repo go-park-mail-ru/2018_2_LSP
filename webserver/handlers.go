@@ -1,9 +1,10 @@
 package webserver
 
 import (
-	"2018_2_LSP/user"
 	"encoding/json"
 	"net/http"
+
+	"github.com/go-park-mail-ru/2018_2_LSP/user"
 )
 
 func authHandler(w http.ResponseWriter, r *http.Request) {

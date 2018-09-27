@@ -1,10 +1,11 @@
 package user
 
 import (
-	"2018_2_LSP/utils"
 	"errors"
 	"log"
 	"time"
+
+	"github.com/go-park-mail-ru/2018_2_LSP/utils"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"

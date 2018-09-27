@@ -1,7 +1,7 @@
 package main
 
 import (
-	ws "2018_2_LSP/webserver"
+	ws "github.com/go-park-mail-ru/2018_2_LSP/webserver"
 )
 
 func main() {
