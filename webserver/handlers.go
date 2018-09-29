@@ -2,10 +2,26 @@ package webserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-park-mail-ru/2018_2_LSP/user"
 )
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	signature, err := r.Cookie("signature")
+	if err == nil {
+		signature.Expires = time.Now().AddDate(0, 0, -1)
+		http.SetCookie(w, signature)
+	}
+	headerPayload, err := r.Cookie("header.payload")
+	if err == nil {
+		headerPayload.Expires = time.Now().AddDate(0, 0, -1)
+		http.SetCookie(w, headerPayload)
+	}
+}
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -24,6 +40,22 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONToStream(w, apiError{2, err.Error()})
 		return
 	}
+
+	firstDot := strings.Index(u.Token, ".") + 1
+	splitter := strings.Index(u.Token[firstDot:], ".") + firstDot
+	fmt.Println(firstDot, splitter)
+	cookieHeaderPayload := http.Cookie{
+		Name:    "header.payload",
+		Value:   u.Token[:splitter],
+		Expires: time.Now().Add(30 * time.Minute),
+	}
+	cookieSignature := http.Cookie{
+		Name:    "signature",
+		Value:   u.Token[splitter+1:],
+		Expires: time.Now().Add(720 * time.Hour),
+	}
+	http.SetCookie(w, &cookieHeaderPayload)
+	http.SetCookie(w, &cookieSignature)
 
 	err = writeJSONToStream(w, apiAuth{0, u.Token})
 }
