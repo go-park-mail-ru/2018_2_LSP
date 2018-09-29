@@ -2,7 +2,6 @@ package webserver
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -42,17 +41,19 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	firstDot := strings.Index(u.Token, ".") + 1
-	splitter := strings.Index(u.Token[firstDot:], ".") + firstDot
-	fmt.Println(firstDot, splitter)
+	secondDot := strings.Index(u.Token[firstDot:], ".") + firstDot
 	cookieHeaderPayload := http.Cookie{
 		Name:    "header.payload",
-		Value:   u.Token[:splitter],
+		Value:   u.Token[:secondDot],
 		Expires: time.Now().Add(30 * time.Minute),
+		Secure:  true,
 	}
 	cookieSignature := http.Cookie{
-		Name:    "signature",
-		Value:   u.Token[splitter+1:],
-		Expires: time.Now().Add(720 * time.Hour),
+		Name:     "signature",
+		Value:    u.Token[secondDot+1:],
+		Expires:  time.Now().Add(720 * time.Hour),
+		Secure:   true,
+		HttpOnly: true,
 	}
 	http.SetCookie(w, &cookieHeaderPayload)
 	http.SetCookie(w, &cookieSignature)
