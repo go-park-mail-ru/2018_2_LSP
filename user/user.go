@@ -1,6 +1,8 @@
 package user
 
-import "github.com/go-park-mail-ru/2018_2_LSP/utils"
+import (
+	"github.com/go-park-mail-ru/2018_2_LSP/utils"
+)
 
 // User Structure that stores user information retrieved from database or
 // entered by user during registration
@@ -20,7 +22,7 @@ type User struct {
 // GetUserByID returns all user information by ID
 func GetUserByID(id int) (User, error) {
 	var u User
-	rows, err := utils.Query("SELECT email, firstname, lastname, usernmae FROM users WHERE id = $1", id)
+	rows, err := utils.Query("SELECT email, first_name, last_name, usernmae FROM users WHERE id = $1", id)
 	if err != nil {
 		return u, err
 	}
@@ -28,6 +30,21 @@ func GetUserByID(id int) (User, error) {
 	rows.Next()
 	err = rows.Scan(&u.Email, &u.FirstName, &u.LastName, &u.Username)
 	return u, err
+}
+
+// ValidateUserPassword validates user password
+func ValidateUserPassword(password string, id int) (bool, error) {
+	row, err := utils.Query("SELECT password FROM users WHERE id = $1", id)
+	if err != nil {
+		return false, err
+	}
+	var hashedPassword string
+	row.Next()
+	err = row.Scan(&hashedPassword)
+	if err != nil {
+		return false, err
+	}
+	return utils.ComparePasswords(hashedPassword, password), nil
 }
 
 // Register Function that sign ups user

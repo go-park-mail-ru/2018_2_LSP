@@ -29,21 +29,13 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 			writeJSONToStream(w, apiError{3, "Please, specify old password"})
 			return
 		}
-		row, err := utils.Query("SELECT password FROM users WHERE id = $1", int(claims["id"].(float64)))
+		isValid, err := user.ValidateUserPassword(oldPassword, int(claims["id"].(float64)))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, err.Error()})
 			return
 		}
-		var hashedPassword string
-		row.Next()
-		err = row.Scan(&hashedPassword)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			writeJSONToStream(w, apiError{3, err.Error()})
-			return
-		}
-		if !utils.ComparePasswords(hashedPassword, oldPassword) {
+		if !isValid {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, "Wrong old password"})
 			return
