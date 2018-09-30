@@ -10,6 +10,8 @@ import (
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	if r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		writeJSONToStream(w, apiError{1, "Method Not Allowed"})
@@ -30,6 +32,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -60,6 +63,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -89,6 +93,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			case 3:
 				fields = append(fields, fieldError{"username", err.Error()})
 			}
+			w.WriteHeader(http.StatusConflict)
 			writeJSONToStream(w, registerError{2, fields})
 			return
 		}
