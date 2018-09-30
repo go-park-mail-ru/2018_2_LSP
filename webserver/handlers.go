@@ -16,6 +16,7 @@ func avatarsHandler(w http.ResponseWriter, r *http.Request) {
 	if origin := r.Header.Get("Origin"); origin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != http.MethodPost {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -146,6 +147,7 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	if origin := r.Header.Get("Origin"); origin != "" {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 	if r.Method != http.MethodPut && r.Method != http.MethodGet {
 		w.WriteHeader(http.StatusMethodNotAllowed)
