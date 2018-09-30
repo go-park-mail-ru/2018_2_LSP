@@ -57,7 +57,7 @@ func Register(u User) (User, error) {
 
 	u.Password = hashAndSalt([]byte(u.Password))
 
-	rows, err := utils.Query("SELECT EXISTS (SELECT * FROM user WHERE email = $1 LIMIT 1) AS `email`, EXISTS (SELECT * FROM user WHERE username = $2 LIMIT 1) AS `username`", u.Email, u.Username)
+	rows, err := utils.Query("SELECT EXISTS (SELECT * FROM user WHERE email = $1 LIMIT 1) AS email, EXISTS (SELECT * FROM user WHERE username = $2 LIMIT 1) AS username", u.Email, u.Username)
 	if err != nil {
 		return u, err
 	}
