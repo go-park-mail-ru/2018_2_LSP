@@ -3,7 +3,6 @@ package webserver
 import (
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/go-park-mail-ru/2018_2_LSP/user"
@@ -40,23 +39,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	firstDot := strings.Index(u.Token, ".") + 1
-	secondDot := strings.Index(u.Token[firstDot:], ".") + firstDot
-	cookieHeaderPayload := http.Cookie{
-		Name:    "header.payload",
-		Value:   u.Token[:secondDot],
-		Expires: time.Now().Add(30 * time.Minute),
-		Secure:  true,
-	}
-	cookieSignature := http.Cookie{
-		Name:     "signature",
-		Value:    u.Token[secondDot+1:],
-		Expires:  time.Now().Add(720 * time.Hour),
-		Secure:   true,
-		HttpOnly: true,
-	}
-	http.SetCookie(w, &cookieHeaderPayload)
-	http.SetCookie(w, &cookieSignature)
+	setAuthCookies(w, u.Token)
 
 	err = writeJSONToStream(w, apiAuth{0, u.Token})
 }
@@ -92,6 +75,8 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONToStream(w, apiError{2, err.Error()})
 		return
 	}
+
+	setAuthCookies(w, u.Token)
 
 	err = writeJSONToStream(w, apiAuth{0, u.Token})
 }
