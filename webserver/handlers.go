@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -30,7 +31,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 	}
 
 	if len(u.Password) > 0 {
-		if len(u.OldPassword) > 0 {
+		if len(u.OldPassword) == 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, "Please, specify old password"})
 			return
@@ -62,6 +63,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 	}
 	request = request[:len(request)-1]
 	request += "WHERE id = $1 RETURNING first_name, last_name, email, username"
+	fmt.Println(int(claims["id"].(float64)), request)
 	rows, err := utils.Query(request, int(claims["id"].(float64)))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
