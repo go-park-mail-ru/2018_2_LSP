@@ -13,12 +13,12 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 
 	firstname, err := extractKey(r, "firstname")
 	if err == nil {
-		data["firstname"] = firstname
+		data["first_name"] = firstname
 	}
 
 	lastname, err := extractKey(r, "lastname")
 	if err == nil {
-		data["lastname"] = lastname
+		data["last_name"] = lastname
 	}
 
 	newPassword, err := extractKey(r, "newPassword")
@@ -63,7 +63,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 		request += k + "=" + v + ","
 	}
 	request = request[:len(request)-1]
-	request += "WHERE id = $1 RETURNING firstname, lastname, email, username"
+	request += "WHERE id = $1 RETURNING first_name, last_name, email, username"
 	rows, err := utils.Query(request, int(claims["id"].(float64)))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
