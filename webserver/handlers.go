@@ -59,7 +59,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 	request := "UPDATE users SET "
 
 	for k, v := range data {
-		request += k + "=\"" + v + "\","
+		request += k + "='" + v + "',"
 	}
 	request = request[:len(request)-1]
 	request += " WHERE id = $1 RETURNING first_name, last_name, email, username"
