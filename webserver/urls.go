@@ -15,5 +15,6 @@ func getUrlsAndHandlers() []urlHandler {
 	lt := mw.Chain(mw.Logging, mw.Tracing)
 	return []urlHandler{
 		urlHandler{"/", lt(mainHandler)},
+		urlHandler{"/avatars", lt(avatarsHandler)},
 	}
 }

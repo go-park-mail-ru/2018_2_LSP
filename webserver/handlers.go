@@ -10,6 +10,46 @@ import (
 	"github.com/go-park-mail-ru/2018_2_LSP/utils"
 )
 
+func avatarsHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSONToStream(w, apiError{1, "Method not allowed"})
+		return
+	}
+
+	claims, err := checkAuth(r)
+
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		writeJSONToStream(w, apiError{2, err.Error()})
+		return
+	}
+
+	file, handle, err := r.FormFile("file")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSONToStream(w, apiError{1, err.Error()})
+		return
+	}
+	defer file.Close()
+
+	mimeType := handle.Header.Get("Content-Type")
+	switch mimeType {
+	case "image/jpeg":
+		saveFile(file, handle, int(claims["id"].(float64)))
+		response := avatarUpload{URL: "/avatars/" + string(int(claims["id"].(float64))) + handle.Filename}
+		writeJSONToStream(w, response)
+	case "image/png":
+		saveFile(file, handle, int(claims["id"].(float64)))
+		response := avatarUpload{URL: "/avatars/" + string(int(claims["id"].(float64))) + handle.Filename}
+		writeJSONToStream(w, response)
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSONToStream(w, apiError{1, "The format file is not valid"})
+		return
+	}
+}
+
 func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClaims) {
 	decoder := json.NewDecoder(r.Body)
 	var u user.User

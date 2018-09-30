@@ -3,6 +3,8 @@ package webserver
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -19,6 +21,10 @@ type apiError struct {
 type apiAuth struct {
 	Code  int
 	Token string
+}
+
+type avatarUpload struct {
+	URL string
 }
 
 func extractKey(r *http.Request, key string) (string, error) {
@@ -52,4 +58,16 @@ func checkAuth(r *http.Request) (jwt.MapClaims, error) {
 	})
 
 	return claims, err
+}
+
+func saveFile(file multipart.File, handle *multipart.FileHeader, id int) error {
+	data, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile("/go/src/github.com/go-park-mail-ru/2018_2_LSP/avatars/"+string(id)+"_"+handle.Filename, data, 0666)
+	if err != nil {
+		return err
+	}
 }

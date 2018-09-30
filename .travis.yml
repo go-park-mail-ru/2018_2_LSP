@@ -9,7 +9,7 @@ after_success:
 - sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST docker stop user && docker rm user
 - sshpass -p $SSH_PASS scp -rp -o stricthostkeychecking=no * $SSH_USER@$SSH_HOST:~/server/
 - sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST docker build -t user-server ~/server/
-- sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST docker run -e "DB_HOST=postgres" -e "DB_USER=$DB_USER" -e "DB_PASS=$DB_PASS" -e "DB_DB=$DB_DB" -d --link postgres:postgres --publish 5050:8080 --name user --rm user-server
+- sshpass -p $SSH_PASS ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST docker run -e "DB_HOST=postgres" -e "DB_USER=$DB_USER" -e "DB_PASS=$DB_PASS" -e "DB_DB=$DB_DB" -d --link postgres:postgres --publish 5050:8080 --name user -v ~/avatars:/go/src/github.com/go-park-mail-ru/2018_2_LSP/avatars --rm user-server
 
 env:
   global:
