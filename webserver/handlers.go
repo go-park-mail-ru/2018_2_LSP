@@ -38,14 +38,16 @@ func avatarsHandler(w http.ResponseWriter, r *http.Request) {
 
 	mimeType := handle.Header.Get("Content-Type")
 	switch mimeType {
-	case "image/jpeg":
-		saveFile(file, handle, int(claims["id"].(float64)))
+	case "image/jpeg", "image/png":
+		err = saveFile(file, handle, int(claims["id"].(float64)))
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			writeJSONToStream(w, apiError{1, err.Error()})
+			return
+		}
 		response := avatarUpload{URL: "/avatars/" + string(int(claims["id"].(float64))) + handle.Filename}
 		writeJSONToStream(w, response)
-	case "image/png":
-		saveFile(file, handle, int(claims["id"].(float64)))
-		response := avatarUpload{URL: "/avatars/" + string(int(claims["id"].(float64))) + handle.Filename}
-		writeJSONToStream(w, response)
+		return
 	default:
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSONToStream(w, apiError{1, "The format file is not valid"})

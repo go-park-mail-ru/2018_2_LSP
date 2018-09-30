@@ -70,4 +70,5 @@ func saveFile(file multipart.File, handle *multipart.FileHeader, id int) error {
 	if err != nil {
 		return err
 	}
+	return nil
 }
