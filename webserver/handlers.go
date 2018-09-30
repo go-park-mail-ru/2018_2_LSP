@@ -9,6 +9,13 @@ import (
 )
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSONToStream(w, apiError{1, "Method Not Allowed"})
+		return
+	}
+
 	signature, err := r.Cookie("signature")
 	if err == nil {
 		signature.Expires = time.Now().AddDate(0, 0, -1)
@@ -23,6 +30,13 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSONToStream(w, apiError{1, "Method Not Allowed"})
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	var c user.Credentials
 	err := decoder.Decode(&c)
@@ -46,6 +60,13 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSONToStream(w, apiError{1, "Method Not Allowed"})
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	var u user.User
 	err := decoder.Decode(&u)
