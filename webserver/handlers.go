@@ -19,7 +19,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 		return
 	}
 
-	var data map[string]string
+	data := make(map[string]string)
 
 	if len(u.FirstName) > 0 {
 		data["first_name"] = u.FirstName
