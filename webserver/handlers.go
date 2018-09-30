@@ -1,6 +1,7 @@
 package webserver
 
 import (
+	"encoding/json"
 	"net/http"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -9,27 +10,32 @@ import (
 )
 
 func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClaims) {
+	decoder := json.NewDecoder(r.Body)
+	var u user.User
+	err := decoder.Decode(&u)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		writeJSONToStream(w, apiError{1, err.Error()})
+		return
+	}
+
 	var data map[string]string
 
-	firstname, err := extractKey(r, "firstname")
-	if err == nil {
-		data["first_name"] = firstname
+	if len(u.FirstName) > 0 {
+		data["first_name"] = u.FirstName
 	}
 
-	lastname, err := extractKey(r, "lastname")
-	if err == nil {
-		data["last_name"] = lastname
+	if len(u.LastName) > 0 {
+		data["last_name"] = u.LastName
 	}
 
-	newPassword, err := extractKey(r, "newPassword")
-	if err == nil {
-		oldPassword, err := extractKey(r, "oldPassword")
-		if err != nil {
+	if len(u.Password) > 0 {
+		if len(u.OldPassword) > 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, "Please, specify old password"})
 			return
 		}
-		isValid, err := user.ValidateUserPassword(oldPassword, int(claims["id"].(float64)))
+		isValid, err := user.ValidateUserPassword(u.OldPassword, int(claims["id"].(float64)))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, err.Error()})
@@ -40,7 +46,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 			writeJSONToStream(w, apiError{3, "Wrong old password"})
 			return
 		}
-		data["password"] = newPassword
+		data["password"] = u.Password
 	}
 
 	if len(data) == 0 {
@@ -62,9 +68,10 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 		writeJSONToStream(w, apiError{3, err.Error()})
 		return
 	}
-	var u user.User
 	rows.Next()
 	err = rows.Scan(&u.FirstName, &u.LastName, &u.Email, &u.Username)
+	u.Password = ""
+	u.OldPassword = ""
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSONToStream(w, apiError{3, err.Error()})

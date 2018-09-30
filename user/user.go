@@ -9,6 +9,7 @@ import (
 type User struct {
 	Email       string
 	Password    string
+	OldPassword string
 	ID          int
 	Token       string
 	Username    string
