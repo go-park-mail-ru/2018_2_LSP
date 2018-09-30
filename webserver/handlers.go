@@ -62,7 +62,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 		request += k + "=" + v + ","
 	}
 	request = request[:len(request)-1]
-	request += "WHERE id = $1 RETURNING first_name, last_name, email, username"
+	request += " WHERE id = $1 RETURNING first_name, last_name, email, username"
 	fmt.Println(int(claims["id"].(float64)), request)
 	rows, err := utils.Query(request, int(claims["id"].(float64)))
 	if err != nil {
