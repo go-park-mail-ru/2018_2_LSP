@@ -22,7 +22,7 @@ type User struct {
 // GetUserByID returns all user information by ID
 func GetUserByID(id int) (User, error) {
 	var u User
-	rows, err := utils.Query("SELECT email, first_name, last_name, usernmae FROM users WHERE id = $1", id)
+	rows, err := utils.Query("SELECT email, first_name, last_name, username FROM users WHERE id = $1", id)
 	if err != nil {
 		return u, err
 	}
