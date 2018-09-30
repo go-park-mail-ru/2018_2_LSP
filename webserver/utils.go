@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 type jsonConvertable interface {
@@ -30,4 +32,24 @@ func extractKey(r *http.Request, key string) (string, error) {
 
 func writeJSONToStream(w http.ResponseWriter, p jsonConvertable) error {
 	return json.NewEncoder(w).Encode(p)
+}
+
+func checkAuth(r *http.Request) error {
+	signature, err := r.Cookie("signature")
+	if err != nil {
+		return err
+	}
+
+	headerPayload, err := r.Cookie("header.payload")
+	if err != nil {
+		return err
+	}
+
+	tokenString := headerPayload.Value + "." + signature.Value
+	claims := jwt.MapClaims{}
+	_, err = jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("HeAdfasdf3ref&^%$Dfrtgauyhia"), nil
+	})
+
+	return err
 }
