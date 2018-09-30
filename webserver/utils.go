@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
@@ -66,7 +67,7 @@ func saveFile(file multipart.File, handle *multipart.FileHeader, id int) error {
 		return err
 	}
 
-	err = ioutil.WriteFile("/go/src/github.com/go-park-mail-ru/2018_2_LSP/avatars/"+string(id)+"_"+handle.Filename, data, 0666)
+	err = ioutil.WriteFile("/go/src/github.com/go-park-mail-ru/2018_2_LSP/avatars/"+strconv.Itoa(id)+"_"+handle.Filename, data, 0666)
 	if err != nil {
 		return err
 	}

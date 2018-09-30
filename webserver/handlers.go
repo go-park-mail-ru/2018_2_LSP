@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-park-mail-ru/2018_2_LSP/user"
@@ -45,7 +46,7 @@ func avatarsHandler(w http.ResponseWriter, r *http.Request) {
 			writeJSONToStream(w, apiError{1, err.Error()})
 			return
 		}
-		response := avatarUpload{URL: "/avatars/" + string(int(claims["id"].(float64))) + handle.Filename}
+		response := avatarUpload{URL: "/avatars/" + strconv.Itoa(int(claims["id"].(float64))) + "_" + handle.Filename}
 		writeJSONToStream(w, response)
 		return
 	default:
