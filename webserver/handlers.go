@@ -29,7 +29,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 			writeJSONToStream(w, apiError{3, "Please, specify old password"})
 			return
 		}
-		row, err := utils.Query("SELECT password FROM users WHERE id = $1", claims["id"].(int))
+		row, err := utils.Query("SELECT password FROM users WHERE id = $1", int(claims["id"].(float64)))
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			writeJSONToStream(w, apiError{3, err.Error()})
@@ -64,7 +64,7 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 	}
 	request = request[:len(request)-1]
 	request += "WHERE id = $1 RETURNING firstname, lastname, email, username"
-	rows, err := utils.Query(request, claims["id"].(int))
+	rows, err := utils.Query(request, int(claims["id"].(float64)))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSONToStream(w, apiError{3, err.Error()})
@@ -82,7 +82,8 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 }
 
 func handleGetRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClaims) {
-	u, err := user.GetUserByID(claims["id"].(int))
+	id := int(claims["id"].(float64))
+	u, err := user.GetUserByID(id)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		writeJSONToStream(w, apiError{3, err.Error()})
