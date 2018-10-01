@@ -12,8 +12,8 @@ type urlHandler struct {
 }
 
 func getUrlsAndHandlers() []urlHandler {
-	lt := mw.Chain(mw.Logging, mw.Tracing)
+	c := mw.Chain(mw.Cors, mw.Auth, mw.Logging, mw.Tracing)
 	return []urlHandler{
-		urlHandler{"/", lt(mainHandler)},
+		urlHandler{"/", c(mainHandler)},
 	}
 }

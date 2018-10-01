@@ -1,51 +1,57 @@
 package middlewares
 
 import (
-	"fmt"
+	"encoding/json"
 	"net/http"
-	"strings"
+	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+func responseJSON(statusCode int, w http.ResponseWriter, p interface{}) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(p)
+}
+
+type apiError struct {
+	Code    int
+	Message string
+}
+
 // Auth Middleware for protecting urls from unauthorized users
 func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
-		header := r.Header.Get("Authorization")
-		if len(header) == 0 {
-			http.Error(w, "Not authorized", 401)
-			return
-		}
-		splittedHeader := strings.Fields(r.Header.Get("Authorization"))
-		if len(splittedHeader) != 2 {
-			http.Error(w, "Not authorized", 401)
-			return
-		}
-		tokenString := splittedHeader[1]
-
-		if len(tokenString) == 0 {
-			http.Error(w, "Not authorized", 401)
+		signature, err := r.Cookie("signature")
+		if err != nil {
+			responseJSON(http.StatusUnauthorized, w, "")
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				http.Error(w, "Unexpected signing method: ", 401)
-				// return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-			}
+		headerPayload, err := r.Cookie("header.payload")
+		if err != nil {
+			responseJSON(http.StatusUnauthorized, w, "")
+			return
+		}
 
-			// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-			return []byte("Secret"), nil
+		tokenString := headerPayload.Value + "." + signature.Value
+		claims := jwt.MapClaims{}
+		_, err = jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte("HeAdfasdf3ref&^%$Dfrtgauyhia"), nil
 		})
 
-		claims, ok := token.Claims.(jwt.MapClaims)
-
-		if !ok || !token.Valid {
-			http.Error(w, err.Error(), 401)
+		if err != nil {
+			signatureCoookie := http.Cookie{
+				Name:    "signature",
+				Expires: time.Date(1970, 1, 1, 1, 1, 1, 1, time.UTC),
+			}
+			headerPayloadCookie := http.Cookie{
+				Name:    "signature",
+				Expires: time.Date(1970, 1, 1, 1, 1, 1, 1, time.UTC),
+			}
+			http.SetCookie(w, &signatureCoookie)
+			http.SetCookie(w, &headerPayloadCookie)
+			responseJSON(http.StatusUnauthorized, w, apiError{1, err.Error()})
 			return
-		} else {
-			fmt.Println(claims["foo"], claims["nbf"])
 		}
 
 		next.ServeHTTP(w, r)
