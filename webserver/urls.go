@@ -12,10 +12,10 @@ type urlHandler struct {
 }
 
 func getUrlsAndHandlers() []urlHandler {
-	lt := mw.Chain(mw.Logging, mw.Tracing)
+	lt := mw.Chain(mw.Cors, mw.Logging, mw.Tracing)
 	return []urlHandler{
-		urlHandler{"/auth", lt(authHandler)},
-		urlHandler{"/register", lt(registerHandler)},
-		urlHandler{"/logout", lt(logoutHandler)},
+		urlHandler{"/auth", lt(mw.Post(authHandler))},
+		urlHandler{"/register", lt(mw.Post(registerHandler))},
+		urlHandler{"/logout", lt(mw.Delete(logoutHandler))},
 	}
 }

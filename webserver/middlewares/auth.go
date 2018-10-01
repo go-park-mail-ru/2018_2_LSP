@@ -1,22 +1,11 @@
 package middlewares
 
 import (
-	"encoding/json"
 	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
 )
-
-func responseJSON(statusCode int, w http.ResponseWriter, p interface{}) {
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(p)
-}
-
-type apiError struct {
-	Code    int
-	Message string
-}
 
 // Auth Middleware for protecting urls from unauthorized users
 func Auth(next http.HandlerFunc) http.HandlerFunc {
@@ -42,11 +31,11 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		if err != nil {
 			signatureCoookie := http.Cookie{
 				Name:    "signature",
-				Expires: time.Date(1970, 1, 1, 1, 1, 1, 1, time.UTC),
+				Expires: time.Now().AddDate(0, 0, -1),
 			}
 			headerPayloadCookie := http.Cookie{
 				Name:    "signature",
-				Expires: time.Date(1970, 1, 1, 1, 1, 1, 1, time.UTC),
+				Expires: time.Now().AddDate(0, 0, -1),
 			}
 			http.SetCookie(w, &signatureCoookie)
 			http.SetCookie(w, &headerPayloadCookie)

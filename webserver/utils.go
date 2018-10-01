@@ -30,8 +30,9 @@ type apiAuth struct {
 	Token string
 }
 
-func writeJSONToStream(w http.ResponseWriter, p jsonConvertable) error {
-	return json.NewEncoder(w).Encode(p)
+func responseJSON(statusCode int, w http.ResponseWriter, p interface{}) {
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(p)
 }
 
 func setAuthCookies(w http.ResponseWriter, tokenString string) {
