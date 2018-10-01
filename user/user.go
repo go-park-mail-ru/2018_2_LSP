@@ -2,7 +2,6 @@ package user
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/go-park-mail-ru/2018_2_LSP/utils"
@@ -24,7 +23,6 @@ type User struct {
 	ID          int
 	Token       string
 	Username    string
-	Password    string
 	FirstName   string
 	LastName    string
 	Group       int
@@ -33,33 +31,47 @@ type User struct {
 }
 
 type RegisterError struct {
-	s    string
-	code int
+	Field   string
+	Message string
 }
 
 func (e *RegisterError) Error() string {
-	return e.s
-	// return fmt.Sprintf("radius %0.2f: %s", e.radius, e.err)
+	return e.Message
 }
 
-func (e *RegisterError) Code() int {
-	return e.code
-	// return fmt.Sprintf("radius %0.2f: %s", e.radius, e.err)
-}
+func validateAuthInput(u *User) []error {
+	errs := make([]error, 0)
 
-// Register Function that sign ups user
-func Register(u User) (User, error) {
-
-	err := validateStringForEmptiness(u.Password, u.Email, u.Username)
-	if err != nil {
-		return u, err
+	if len(u.Password) == 0 {
+		errs = append(errs, &RegisterError{"password", "No password was specified"})
 	}
+	if len(u.Email) == 0 {
+		errs = append(errs, &RegisterError{"email", "No email was specified"})
+	}
+	return errs
+}
 
-	u.Password = hashAndSalt([]byte(u.Password))
+func validateRegisterInput(u *User) []error {
+	errs := make([]error, 0)
 
+	if len(u.Password) == 0 {
+		errs = append(errs, &RegisterError{"password", "No password was specified"})
+	}
+	if len(u.Email) == 0 {
+		errs = append(errs, &RegisterError{"email", "No email was specified"})
+	}
+	if len(u.Username) == 0 {
+		errs = append(errs, &RegisterError{"username", "No username was specified"})
+	}
+	return errs
+}
+
+func validateRegisterUnique(u *User) []error {
+	errs := make([]error, 0)
 	rows, err := utils.Query("SELECT EXISTS (SELECT * FROM users WHERE email = $1 LIMIT 1) AS email, EXISTS (SELECT * FROM users WHERE username = $2 LIMIT 1) AS username", u.Email, u.Username)
 	if err != nil {
-		return u, err
+		errs = append(errs, err)
+		return errs
 	}
 
 	rows.Next()
@@ -67,91 +79,123 @@ func Register(u User) (User, error) {
 	usernameTaken := false
 	err = rows.Scan(&emailTaken, &usernameTaken)
 	if err != nil {
-		return u, err
-	}
-	if emailTaken && usernameTaken {
-		return u, &RegisterError{"Is already taken", 1}
-	}
-	if emailTaken {
-		return u, &RegisterError{"Is already taken", 2}
-	}
-	if usernameTaken {
-		return u, &RegisterError{"Is already taken", 3}
+		errs = append(errs, err)
+		return errs
 	}
 
-	rows, err = utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)
+	if emailTaken {
+		errs = append(errs, &RegisterError{"email", "Email is already taken"})
+	}
+	if usernameTaken {
+		errs = append(errs, &RegisterError{"username", "Username is already taken"})
+	}
+
+	return nil
+}
+
+func (u *User) createUser() []error {
+	errs := make([]error, 0)
+	rows, err := utils.Query("INSERT INTO users (first_name, last_name, email, password, username) VALUES ($1, $2, $3, $4, $5) RETURNING id;", u.FirstName, u.LastName, u.Email, u.Password, u.Username)
 	if err != nil {
-		return u, err
+		errs = append(errs, err)
+		return errs
 	}
 
 	rows.Next()
 	err = rows.Scan(&u.ID)
 	if err != nil {
-		return u, err
+		errs = append(errs, err)
+		return errs
 	}
 
+	return nil
+}
+
+func (u *User) generateToken() []error {
+	var err error
+	errs := make([]error, 0)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":        u.ID,
 		"generated": time.Now(),
 	})
 	u.Token, err = token.SignedString([]byte("HeAdfasdf3ref&^%$Dfrtgauyhia"))
 	if err != nil {
-		return u, err
+		errs = append(errs, err)
+		return errs
 	}
 
-	return u, nil
+	return nil
+}
+
+// Register Function that sign ups user
+func (u *User) Register() []error {
+	var err error
+
+	if errs := validateRegisterInput(u); errs != nil {
+		return errs
+	}
+
+	u.Password, err = hashAndSalt(u.Password)
+	if err != nil {
+		errs := make([]error, 0)
+		errs = append(errs, err)
+		return errs
+	}
+
+	if errs := validateRegisterUnique(u); errs != nil {
+		return errs
+	}
+
+	if errs := u.createUser(); errs != nil {
+		return errs
+	}
+
+	if errs := u.generateToken(); errs != nil {
+		return errs
+	}
+
+	return nil
 }
 
 // Auth Function that authenticates user
-func Auth(c Credentials) (User, error) {
-	var u User
-
-	err := validateStringForEmptiness(c.Email, c.Password)
-	if err != nil {
-		return u, err
+func (u *User) Auth(c Credentials) []error {
+	if errs := validateAuthInput(u); errs != nil {
+		return errs
 	}
 
 	rows, err := utils.Query("SELECT id, password FROM users WHERE email = $1 LIMIT 1", c.Email)
 	if err != nil {
-		return u, err
+		errs := make([]error, 0)
+		errs = append(errs, err)
+		return errs
 	}
 	rows.Next()
-	err = rows.Scan(&u.ID, &u.Password)
-	if err != nil {
-		return u, errors.New("User not found")
+
+	if err := rows.Scan(&u.ID, &u.Password); err != nil {
+		errs := make([]error, 0)
+		errs = append(errs, errors.New("User not found"))
+		return errs
 	}
 
 	if !comparePasswords(u.Password, c.Password) {
-		return u, errors.New("Wrong password")
+		errs := make([]error, 0)
+		errs = append(errs, errors.New("Wrong password"))
+		return errs
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":        u.ID,
-		"generated": time.Now(),
-	})
-	u.Token, err = token.SignedString([]byte("HeAdfasdf3ref&^%$Dfrtgauyhia"))
-	if err != nil {
-		return u, err
+	if errs := u.generateToken(); errs != nil {
+		return errs
 	}
 
-	return u, nil
-}
-
-func validateStringForEmptiness(strs ...string) error {
-	for _, s := range strs {
-		if len(s) == 0 {
-			return errors.New("Found empty parameter")
-		}
-	}
 	return nil
 }
 
-func hashAndSalt(pwd []byte) string {
-	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+func hashAndSalt(pwd string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), bcrypt.MinCost)
 	if err != nil {
-		log.Println(err)
+		return "", err
 	}
-	return string(hash)
+	return string(hash), nil
 }
 
 func comparePasswords(hashedPwd string, plainPwd string) bool {
