@@ -11,22 +11,22 @@ import (
 
 // Credentials Structure that stores user credentials for auth
 type Credentials struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // User Structure that stores user information retrieved from database or
 // entered by user during registration
 type User struct {
 	Credentials
-	ID          int
-	Token       string
-	Username    string
-	FirstName   string
-	LastName    string
-	Group       int
-	DateUpdate  string
-	DateUreated string
+	ID          int    `json:"id"`
+	Token       string `json:"token"`
+	Username    string `json:"username"`
+	FirstName   string `json:"firstname"`
+	LastName    string `json:"lastname"`
+	Group       int    `json:"group"`
+	DateUpdate  string `json:"dateupdated"`
+	DateUreated string `json:"datecreated"`
 }
 
 // Register Function that sign ups user
@@ -60,7 +60,9 @@ func (u *User) Auth(c Credentials) error {
 	}
 
 	defer rows.Close()
-	rows.Next()
+	if !rows.Next() {
+		return errors.New("User not found")
+	}
 
 	if err := rows.Scan(&u.ID, &u.Password); err != nil {
 		return err

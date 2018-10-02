@@ -16,6 +16,6 @@ func getUrlsAndHandlers() []urlHandler {
 	return []urlHandler{
 		urlHandler{"/auth", lt(mw.Post(authHandler))},
 		urlHandler{"/register", lt(mw.Post(registerHandler))},
-		urlHandler{"/logout", lt(mw.Delete(logoutHandler))},
+		urlHandler{"/logout", lt(mw.Delete(mw.Auth(logoutHandler)))},
 	}
 }

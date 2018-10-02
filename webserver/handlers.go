@@ -9,8 +9,6 @@ import (
 )
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	signature, err := r.Cookie("signature")
 	if err == nil {
 		signature.Expires = time.Now().AddDate(0, 0, -1)
@@ -25,12 +23,10 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func authHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var c user.Credentials
 	rules := govalidator.MapData{
 		"email":    []string{"required", "between:4,25", "email"},
-		"password": []string{"alpha_space"},
+		"password": []string{"required", "alpha_space"},
 	}
 
 	opts := govalidator.Options{
@@ -39,7 +35,7 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 		Rules:   rules,
 	}
 	v := govalidator.New(opts)
-	if e := v.ValidateJSON(); e != nil {
+	if e := v.ValidateJSON(); len(e) > 0 {
 		err := map[string]interface{}{"validationError": e}
 		responseJSON(http.StatusBadRequest, w, err)
 		return
@@ -56,13 +52,11 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func registerHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	var u user.User
 	rules := govalidator.MapData{
 		"username":  []string{"required", "between:4,25"},
 		"email":     []string{"required", "between:4,25", "email"},
-		"password":  []string{"alpha_space"},
+		"password":  []string{"required", "alpha_space"},
 		"firstname": []string{"alpha_space", "between:4,25"},
 		"lastname":  []string{"alpha_space", "between:4,25"},
 	}
@@ -73,7 +67,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		Rules:   rules,
 	}
 	v := govalidator.New(opts)
-	if e := v.ValidateJSON(); e != nil {
+	if e := v.ValidateJSON(); len(e) > 0 {
 		err := map[string]interface{}{"validationError": e}
 		responseJSON(http.StatusBadRequest, w, err)
 		return
