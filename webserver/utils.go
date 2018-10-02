@@ -2,6 +2,7 @@ package webserver
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -36,6 +37,7 @@ func responseJSON(statusCode int, w http.ResponseWriter, p interface{}) {
 }
 
 func setAuthCookies(w http.ResponseWriter, tokenString string) {
+	fmt.Println("Token:", tokenString)
 	firstDot := strings.Index(tokenString, ".") + 1
 	secondDot := strings.Index(tokenString[firstDot:], ".") + firstDot
 	cookieHeaderPayload := http.Cookie{
