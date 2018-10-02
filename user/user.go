@@ -69,7 +69,7 @@ func (u *User) Auth(c Credentials) error {
 	}
 
 	if !validatePassword(u.Password, c.Password) {
-		return err
+		return errors.New("Wrong password for user")
 	}
 
 	if err := u.generateToken(); err != nil {
