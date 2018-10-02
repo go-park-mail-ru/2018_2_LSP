@@ -7,17 +7,17 @@ import (
 // User Structure that stores user information retrieved from database or
 // entered by user during registration
 type User struct {
-	Email       string
-	Password    string
-	OldPassword string
-	ID          int
-	Token       string
-	Username    string
-	FirstName   string
-	LastName    string
-	Group       int
-	DateUpdate  string
-	DateUreated string
+	Email       string `json:"email"`
+	Password    string `json:"password"`
+	OldPassword string `json:"oldpassword"`
+	ID          int    `json:"id"`
+	Token       string `json:"token"`
+	Username    string `json:"username"`
+	FirstName   string `json:"firstname"`
+	LastName    string `json:"lastname"`
+	Group       int    `json:"group"`
+	DateUpdate  string `json:"dateupdated"`
+	DateUreated string `json:"datecreated"`
 }
 
 // GetUserByID returns all user information by ID

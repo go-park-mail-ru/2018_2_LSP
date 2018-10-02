@@ -12,9 +12,9 @@ type urlHandler struct {
 }
 
 func getUrlsAndHandlers() []urlHandler {
-	lt := mw.Chain(mw.Logging, mw.Tracing)
+	lt := mw.Chain(mw.Cors, mw.Logging, mw.Tracing)
 	return []urlHandler{
-		urlHandler{"/", lt(mainHandler)},
-		urlHandler{"/avatar", lt(avatarsHandler)},
+		urlHandler{"/", lt(mw.GetPost(mw.Auth(mainHandler)))},
+		urlHandler{"/avatar", lt(mw.Post(mw.Auth(avatarsHandler)))},
 	}
 }
