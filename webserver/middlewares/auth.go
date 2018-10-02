@@ -44,7 +44,7 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		context.Set(r, "Claims", claims)
+		context.Set(r, "claims", claims)
 
 		next.ServeHTTP(w, r)
 	}
