@@ -15,7 +15,7 @@ func avatarsHandler(w http.ResponseWriter, r *http.Request) {
 	claims := context.Get(r, "claims").(jwt.MapClaims)
 
 	rules := govalidator.MapData{
-		"file:file": []string{"required", "ext:jpg,png", "size:300000", "mime:jpg,png"},
+		"file:file": []string{"required", "ext:jpg,png", "size:300000", "mime:image/jpg,image/png"},
 	}
 
 	opts := govalidator.Options{
