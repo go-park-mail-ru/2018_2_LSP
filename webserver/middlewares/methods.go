@@ -48,10 +48,10 @@ func Delete(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-// GetPost Middleware for Get or Post connection
-func GetPost(next http.HandlerFunc) http.HandlerFunc {
+// GetPut Middleware for Get or Put connection
+func GetPut(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet && r.Method != http.MethodPost {
+		if r.Method != http.MethodGet && r.Method != http.MethodPut {
 			responseJSON(http.StatusMethodNotAllowed, w, apiError{1, "Method Not Allowed"})
 			return
 		}
