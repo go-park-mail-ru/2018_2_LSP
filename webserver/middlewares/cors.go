@@ -16,6 +16,9 @@ func Cors(next http.HandlerFunc) http.HandlerFunc {
 		if r.Method == http.MethodOptions {
 			return
 		}
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
 		next.ServeHTTP(w, r)
 	}
 }

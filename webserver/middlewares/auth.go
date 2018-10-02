@@ -23,13 +23,13 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		signature, err := r.Cookie("signature")
 		if err != nil {
-			responseJSON(http.StatusUnauthorized, w, "")
+			responseJSON(http.StatusUnauthorized, w, apiError{1, "Not signature cookie found"})
 			return
 		}
 
 		headerPayload, err := r.Cookie("header.payload")
 		if err != nil {
-			responseJSON(http.StatusUnauthorized, w, "")
+			responseJSON(http.StatusUnauthorized, w, apiError{1, "Not headerPayload cookie found"})
 			return
 		}
 
