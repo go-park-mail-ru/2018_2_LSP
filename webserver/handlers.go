@@ -70,8 +70,12 @@ func handlePutRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 	}
 
 	data := make(map[string]string)
-	data["firstname"] = u.FirstName
-	data["lastname"] = u.LastName
+	if len(u.FirstName) > 0 {
+		data["first_name"] = u.FirstName
+	}
+	if len(u.LastName) > 0 {
+		data["last_name"] = u.LastName
+	}
 
 	u.ID = int(claims["id"].(float64))
 
