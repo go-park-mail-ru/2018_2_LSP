@@ -1,11 +1,11 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/gorilla/context"
 )
 
 // Auth Middleware for protecting urls from unauthorized users
@@ -44,8 +44,9 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		context.Set(r, "claims", claims)
+		// TODO изменить ключ
+		ctx := context.WithValue(r.Context(), "Claims", claims)
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }

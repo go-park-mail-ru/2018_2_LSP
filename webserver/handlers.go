@@ -7,12 +7,11 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/go-park-mail-ru/2018_2_LSP/user"
 	"github.com/go-park-mail-ru/2018_2_LSP/utils"
-	"github.com/gorilla/context"
 	"github.com/thedevsaddam/govalidator"
 )
 
 func avatarsHandler(w http.ResponseWriter, r *http.Request) {
-	claims := context.Get(r, "claims").(jwt.MapClaims)
+	claims := r.Context().Value("claims").(jwt.MapClaims)
 
 	rules := govalidator.MapData{
 		"file:file": []string{"required", "ext:jpg,png", "size:300000", "mime:image/jpg,image/png"},
@@ -133,7 +132,7 @@ func handleGetRequest(w http.ResponseWriter, r *http.Request, claims jwt.MapClai
 }
 
 func mainHandler(w http.ResponseWriter, r *http.Request) {
-	claims := context.Get(r, "claims").(jwt.MapClaims)
+	claims := r.Context().Value("claims").(jwt.MapClaims)
 	switch r.Method {
 	case http.MethodPut:
 		handlePutRequest(w, r, claims)
