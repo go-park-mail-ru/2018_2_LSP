@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 )
 
 type User struct {
@@ -14,67 +15,135 @@ type User struct {
 	Score     int    `json:"score"`
 }
 
+func cors(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+}
+
+func leaderboards(w http.ResponseWriter, r *http.Request, users *[]User) {
+	pageNumer := r.URL.Query().Get("page")
+	if pageNumer == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("no have correct params"))
+		return
+	} else {
+		jsonUsers, err := json.Marshal(&users)
+		if err != nil {
+			log.Printf("cannot marshal:%s", err)
+		}
+		w.Write(jsonUsers)
+	}
+}
+
+func profile(w http.ResponseWriter, r *http.Request) {
+	session, err := r.Cookie("session")
+	loggedIn := (err != http.ErrNoCookie)
+
+	if loggedIn {
+		w.Write([]byte("Goooood!" + session.Value))
+	}
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	expiration := time.Now().Add(24 * time.Hour)
+	cookie := http.Cookie{
+		Name:    "session",
+		Value:   "moleque",
+		Expires: expiration,
+	}
+	http.SetCookie(w, &cookie)
+	w.Write([]byte("Good!"))
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	session, err := r.Cookie("session")
+	if err == http.ErrNoCookie {
+		return
+	} else {
+		session.Expires = time.Now().Add(-24 * time.Hour)
+		http.SetCookie(w, session)
+	}
+}
+
 func main() {
-	users := map[string]User{
-		"moleque@mail.ru": User{
+	users := []User{
+		{
 			Username:  "Moleque",
 			Email:     "moleque@mail.ru",
 			Password:  "123",
 			Gamecount: 5,
 			Score:     72,
 		},
-		"molecada@yandex.ru": {
+		{
 			Username:  "Molecada",
 			Email:     "molecada@yandex.ru",
 			Password:  "12345",
 			Gamecount: 7,
 			Score:     10,
 		},
-		"l@yandex.ru": {
+		{
 			Username:  "Llll",
 			Email:     "l@yandex.ru",
 			Password:  "12345",
 			Gamecount: 7,
 			Score:     7,
 		},
+		{
+			Username:  "Mlll",
+			Email:     "m@yandex.ru",
+			Password:  "12345",
+			Gamecount: 7,
+			Score:     7,
+		},
+		{
+			Username:  "Nlll",
+			Email:     "n@yandex.ru",
+			Password:  "12345",
+			Gamecount: 7,
+			Score:     7,
+		},
+		{
+			Username:  "Clll",
+			Email:     "c@yandex.ru",
+			Password:  "12345",
+			Gamecount: 7,
+			Score:     7,
+		},
+		{
+			Username:  "Vlll",
+			Email:     "v@yandex.ru",
+			Password:  "12345",
+			Gamecount: 7,
+			Score:     7,
+		},
 	}
 
-	http.HandleFunc("/auth", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			log.Println("bad request: wrong method")
+	http.HandleFunc("/session", func(w http.ResponseWriter, r *http.Request) {
+		cors(w, r)
+		switch r.Method {
+		// case http.MethodGet:
+		// 	(w, r)
+		case http.MethodPost:
+			login(w, r)
+		case http.MethodDelete:
+			logout(w, r)
+			//default:
 		}
-
-		log.Println(r.FormValue("email"), r.FormValue("password"))
 	})
 
-	// http.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-	// 	log.Println("request", r.URL)
-	// 	w.Header().Set("Content-Type", "application/json")
-	// 	w.Write(response)
-	// })
-
-	// http.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
-	// 	log.Println("request", r.URL)
-	// 	w.Header().Set("Content-Type", "application/json")
-	// 	w.Write(response)
-	// })
-
-	http.HandleFunc("/leaderboard", func(w http.ResponseWriter, r *http.Request) {
-		pageNumer := r.URL.Query().Get("page")
-		if pageNumer == "" {
-			return
-		} else {
-			jsonUsers, err := json.Marshal(&users)
-			if err != nil {
-				log.Printf("cannot marshal:%s", err)
+	http.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+		cors(w, r)
+		switch r.Method {
+		case http.MethodGet:
+			page := r.URL.Query().Get("page")
+			if page != "" {
+				leaderboards(w, r, &users)
 			}
-			w.Header().Set("Content-Type", "application/json")
-			log.Println(r.Header.Get("Origin"))
-			w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
-			if r.Method == http.MethodOptions {
-				return
-			}
-			w.Write(jsonUsers)
 		}
 	})
 
