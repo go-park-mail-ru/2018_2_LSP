@@ -84,7 +84,11 @@ func cors(w http.ResponseWriter, r *http.Request) {
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
-	request := &User{}
+	type loginUser struct {
+		Email    string
+		Password string
+	}
+	request := &loginUser{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(request)
 	if err != nil {
@@ -152,14 +156,14 @@ func leaderboards(w http.ResponseWriter, r *http.Request) {
 func profile(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("session")
 	if err == http.ErrNoCookie {
-		log.Println("coook")
+		log.Println("cookie error:", err)
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
 	email, ok := session[cookie.Value]
 	if !ok {
-		log.Println("ses")
+		log.Println("cannot get session")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -172,6 +176,7 @@ func profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(response)
+	w.WriteHeader(http.StatusOK)
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
@@ -230,7 +235,7 @@ func main() {
 		}
 	})
 
-	http.HandleFunc("/user", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		cors(w, r)
 		switch r.Method {
 		case http.MethodGet:
