@@ -83,6 +83,52 @@ func cors(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	request := &User{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(request)
+	if err != nil {
+		log.Printf("err %s", request)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	r.Body.Close()
+
+	if _, exists := users[request.Email]; exists == false {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("No have this user"))
+		return
+	}
+	if users[request.Email].Password != request.Password {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Wrong password"))
+		return
+	}
+
+	sessionId := uuid.NewV4().String()
+	session[sessionId] = request.Email
+
+	expiration := time.Now().Add(24 * time.Hour)
+	cookie := http.Cookie{
+		Name:    "session",
+		Value:   sessionId,
+		Expires: expiration,
+	}
+	http.SetCookie(w, &cookie)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("{}"))
+}
+
+func logout(w http.ResponseWriter, r *http.Request) {
+	session, err := r.Cookie("session")
+	if err == http.ErrNoCookie {
+		return
+	} else {
+		session.Expires = time.Now().Add(-24 * time.Hour)
+		http.SetCookie(w, session)
+	}
+}
+
 func leaderboards(w http.ResponseWriter, r *http.Request) {
 	pageNumer := r.URL.Query().Get("page")
 	if pageNumer == "" {
@@ -128,20 +174,6 @@ func profile(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-
-}
-
-func logout(w http.ResponseWriter, r *http.Request) {
-	session, err := r.Cookie("session")
-	if err == http.ErrNoCookie {
-		return
-	} else {
-		session.Expires = time.Now().Add(-24 * time.Hour)
-		http.SetCookie(w, session)
-	}
-}
-
 func signup(w http.ResponseWriter, r *http.Request) {
 	request := &User{}
 	decoder := json.NewDecoder(r.Body)
@@ -151,6 +183,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	r.Body.Close()
 
 	if _, exists := users[request.Email]; request.Email == "" || exists == true {
 		log.Printf("user %s is exist", request.Email)
@@ -178,17 +211,22 @@ func signup(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func updateUser(w http.ResponseWriter, r *http.Request) {
+
+}
+
 func main() {
 	http.HandleFunc("/session", func(w http.ResponseWriter, r *http.Request) {
 		cors(w, r)
 		switch r.Method {
-		// case http.MethodGet:
-		// 	(w, r)
 		case http.MethodPost:
 			login(w, r)
 		case http.MethodDelete:
 			logout(w, r)
-			//default:
+		case http.MethodOptions:
+			return
+		default:
+			w.WriteHeader(http.StatusBadGateway)
 		}
 	})
 
@@ -204,7 +242,17 @@ func main() {
 			}
 		case http.MethodPost:
 			signup(w, r)
+		case http.MethodPut:
+			updateUser(w, r)
+		case http.MethodOptions:
+			return
+		default:
+			w.WriteHeader(http.StatusBadGateway)
 		}
+	})
+
+	http.HandleFunc("/docs/", func(w http.ResponseWriter, r *http.Request) {
+		cors(w, r)
 	})
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
